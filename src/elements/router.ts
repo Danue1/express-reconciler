@@ -50,7 +50,12 @@ export class RouterElement {
   readonly search!: Handler;
   readonly connect!: Handler;
 
-  readonly use: (controller: Controller) => void;
+  readonly use: {
+    (controller: Controller): void;
+    (path: string, controller: Controller): void;
+  };
+
+  readonly path: string;
 
   constructor({ path, caseSensitive, mergeParams, strict }: RouterElementConfig) {
     const router = Router({ caseSensitive, mergeParams, strict });
@@ -64,10 +69,15 @@ export class RouterElement {
       this[method] = handler as any;
     }
 
-    this.use = (controller: Controller): void => {
-      router.use(controller);
+    this.use = (path: string | Controller, controller?: Controller): void => {
+      if (typeof path === "string") {
+        router.use(path, controller);
+      } else {
+        router.use(controller);
+      }
     };
 
+    this.path = path;
     this.intoController = (): Controller => (router as Express.RequestHandler<any, any, any, any, any>) as Controller;
   }
 }

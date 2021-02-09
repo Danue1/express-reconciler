@@ -49,7 +49,10 @@ export class RootElement {
   readonly search!: Handler;
   readonly connect!: Handler;
 
-  readonly use: (controller: Controller) => void;
+  readonly use: {
+    (controller: Controller): void;
+    (path: string, controller: Controller): void;
+  };
 
   constructor({ port = 8080, middleware = [], urlEncoded = null, onListen = () => {} }: RootElementConfig) {
     const app = Express();
@@ -70,8 +73,12 @@ export class RootElement {
       this[method] = handler as any;
     }
 
-    this.use = (controller: Controller): void => {
-      app.use(controller);
+    this.use = (path: string | Controller, controller?: Controller): void => {
+      if (typeof path === "string") {
+        app.use(path, controller);
+      } else {
+        app.use(controller);
+      }
     };
 
     app.listen(port, () => onListen(port));

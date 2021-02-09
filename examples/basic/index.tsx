@@ -1,6 +1,7 @@
-import Express, { ParameterContext, ResponseBuilder } from "../src";
+import Express, { ParameterContext, ResponseBuilder } from "../../src";
 
 const print = (port: number): void => {
+  console.clear();
   console.log(`[Express Reconciler] Server Running on ${port} Port.`);
 };
 

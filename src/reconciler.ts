@@ -64,7 +64,11 @@ export const Reconciler = ReactReconciler<
       throw new Error("Router cannot be inside.");
     }
     if (isAppElement(parentInstance) || isRouterElement(parentInstance)) {
-      if (isRouterElement(child) || isStaticElement(child)) {
+      if (isRouterElement(child)) {
+        parentInstance.use(child.path, child.intoController());
+        return;
+      }
+      if (isStaticElement(child)) {
         parentInstance.use(child.intoController());
         return;
       }

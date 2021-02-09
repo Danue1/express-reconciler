@@ -14,7 +14,7 @@ type PublishInstance = any;
 type HostContext = any;
 type UpdatePayload = any;
 type _ChildSet = any;
-type TimeoutHandle = any;
+type TimeoutHandle = number;
 type NoTimeout = any;
 
 export const Reconciler = ReactReconciler<
@@ -35,173 +35,256 @@ export const Reconciler = ReactReconciler<
   supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  createInstance(type: Type, props: Props, rootContainer: Container, hostContext: HostContext, internalHandle: OpaqueHandle): Instance {
-    switch (type) {
-      case "app": {
-        const { port = 3000, middleware = [], urlEncoded = null, onListen = () => {} } = props as JSX.IntrinsicElements["app"];
-        return new RootElement({ port, middleware, urlEncoded, onListen });
-      }
-      case "router": {
-        const { path, caseSensitive = false, mergeParams = false, strict = false } = props as JSX.IntrinsicElements["router"];
-        return new RouterElement({ caseSensitive, mergeParams, strict, path });
-      }
-      case "static": {
-        const { path, ...option } = props as JSX.IntrinsicElements["static"];
-        return new StaticElement(path, option);
-      }
+  noTimeout: false,
+  isPrimaryRenderer: true,
+  createInstance,
+  createTextInstance,
+  appendInitialChild,
+  finalizeInitialChildren,
+  prepareUpdate,
+  shouldSetTextContent,
+  getRootHostContext,
+  getChildHostContext,
+  getPublicInstance,
+  prepareForCommit,
+  resetAfterCommit,
+  preparePortalMount,
+  now,
+  scheduleTimeout,
+  cancelTimeout,
+  queueMicrotask,
+  appendChild,
+  appendChildToContainer,
+  insertBefore,
+  insertInContainerBefore,
+  removeChild,
+  removeChildFromContainer,
+  resetTextContent,
+  commitTextUpdate,
+  commitMount,
+  commitUpdate,
+  hideInstance,
+  hideTextInstance,
+  unhideInstance,
+  unhideTextInstance,
+  clearContainer,
+});
+
+function createInstance(
+  type: Type,
+  props: Props,
+  rootContainer: Container,
+  hostContext: HostContext,
+  internalHandle: OpaqueHandle
+): Instance {
+  switch (type) {
+    case "app": {
+      const { port = 3000, middleware = [], urlEncoded = null, onListen = () => {} } = props as JSX.IntrinsicElements["app"];
+      return new RootElement({ port, middleware, urlEncoded, onListen });
     }
-    if (methods.has(type as Method)) {
-      const { path, controller } = props as JSX.IntrinsicElements["get"];
-      return new RouteElement(type as Method, path, controller);
+    case "router": {
+      const { path, caseSensitive = false, mergeParams = false, strict = false } = props as JSX.IntrinsicElements["router"];
+      return new RouterElement({ caseSensitive, mergeParams, strict, path });
     }
-    throw new Error("Unknown type.");
-  },
-  createTextInstance(text: string, rootContainer: Container, hostContext: HostContext, internalHandle: OpaqueHandle): TextInstance {
-    return text;
-  },
-  appendInitialChild(parentInstance: Instance, child: Instance | TextInstance): void {
-    if (isAppElement(child)) {
-      throw new Error("Router cannot be inside.");
+    case "static": {
+      const { path, ...option } = props as JSX.IntrinsicElements["static"];
+      return new StaticElement(path, option);
     }
-    if (isAppElement(parentInstance) || isRouterElement(parentInstance)) {
-      if (isRouterElement(child)) {
-        parentInstance.use(child.path, child.intoController());
-        return;
-      }
-      if (isStaticElement(child)) {
-        parentInstance.use(child.intoController());
-        return;
-      }
-      if (isRouteElement(child)) {
-        const { method, path, controller } = child;
-        parentInstance[method](path, asyncHandler(controller) as any);
-        return;
-      }
+  }
+  if (methods.has(type as Method)) {
+    const { path, controller } = props as JSX.IntrinsicElements["get"];
+    return new RouteElement(type as Method, path, controller);
+  }
+  throw new Error("Unknown type.");
+}
+
+function createTextInstance(text: string, rootContainer: Container, hostContext: HostContext, internalHandle: OpaqueHandle): TextInstance {
+  return text;
+}
+
+function appendInitialChild(parentInstance: Instance, child: Instance | TextInstance): void {
+  if (isAppElement(child)) {
+    throw new Error("Router cannot be inside.");
+  }
+  if (isAppElement(parentInstance) || isRouterElement(parentInstance)) {
+    if (isRouterElement(child)) {
+      parentInstance.use(child.path, child.intoController());
       return;
     }
-    if (isRouteElement(parentInstance)) {
-      if (isRouterElement(child)) {
-        throw new Error("Router cannot be inside a route.");
-      }
-      if (isRouteElement(child)) {
-        throw new Error("Route cannot be inside a route.");
-      }
-      if (isStaticElement(child)) {
-        throw new Error("Static cannot be inside a route.");
-      }
+    if (isStaticElement(child)) {
+      parentInstance.use(child.intoController());
+      return;
     }
-    if (isStaticElement(parentInstance)) {
-      if (isRouterElement(child)) {
-        throw new Error("Router cannot be inside a static.");
-      }
-      if (isRouteElement(child)) {
-        throw new Error("Route cannot be inside a static.");
-      }
-      if (isStaticElement(child)) {
-        throw new Error("Static cannot be inside a static.");
-      }
+    if (isRouteElement(child)) {
+      const { method, path, controller } = child;
+      parentInstance[method](path, asyncHandler(controller) as any);
+      return;
     }
-  },
-  finalizeInitialChildren(instance: Instance, type: Type, props: Props, rootContainer: Container, hostContext: HostContext): boolean {
-    return false;
-  },
-  prepareUpdate(instance, type, oldProps, newProps, rootContainer, hostContedxt): UpdatePayload | null {
-    //
-  },
-  shouldSetTextContent(type, props): boolean {
-    return false;
-  },
-  getRootHostContext(rootContainer: Container): HostContext | null {
-    //
-  },
-  getChildHostContext(parentHostContext: HostContext, type: Type, rootContainer: Container): HostContext {
-    //
-  },
-  getPublicInstance(instance: Instance | TextInstance): PublishInstance {
-    //
-  },
-  prepareForCommit(containerInfo: Container): Record<string, any> | null {
-    return null;
-  },
-  resetAfterCommit(containerInfo: Container): void {
-    //
-  },
-  preparePortalMount(containerInfo: Container): void {
-    //
-  },
-  now(): number {
-    return Date.now();
-  },
-  scheduleTimeout(fn: (...args: unknown[]) => unknown, delay?: number): TimeoutHandle {
-    //
-  },
-  cancelTimeout(id: TimeoutHandle): void {
-    //
-  },
-  noTimeout: false,
-  queueMicrotask(fn: () => void): void {
-    //
-  },
-  isPrimaryRenderer: true,
-  appendChild(parentInstance, child): void {
-    //
-  },
-  appendChildToContainer(container: any, child) {
-    if (isAppElement(child)) {
-      container = child;
+    return;
+  }
+  if (isRouteElement(parentInstance)) {
+    if (isRouterElement(child)) {
+      throw new Error("Router cannot be inside a route.");
     }
-  },
-  insertBefore(parentInstance: Instance, child: Instance | TextInstance, beforeChid: Instance | TextInstance | SuspenseInstance): void {
-    //
-  },
-  insertInContainerBefore(
-    container: Container,
-    child: Instance | TextInstance,
-    beforeChild: Instance | TextInstance | SuspenseInstance
-  ): void {
-    //
-  },
-  removeChild(parentInstance: Instance, child: Instance | TextInstance | SuspenseInstance): void {
-    //
-  },
-  removeChildFromContainer(container: Container, child: Instance | TextInstance | SuspenseInstance): void {
-    //
-  },
-  resetTextContent(instance: Instance): void {
-    //
-  },
-  commitTextUpdate(textInstance: TextInstance, oldText: string, newText: string): void {
-    //
-  },
-  commitMount(instance: Instance, type: Type, props: Props, internalInstanceHandle: OpaqueHandle): void {
-    //
-  },
-  commitUpdate(
-    instance: Instance,
-    updatePayload: UpdatePayload,
-    type: Type,
-    prevProps: Props,
-    nextProps: Props,
-    internalHandle: OpaqueHandle
-  ): void {
-    //
-  },
-  hideInstance(instance: Instance): void {
-    //
-  },
-  hideTextInstance(textInstance: TextInstance): void {
-    //
-  },
-  unhideInstance(instance: Instance): void {
-    //
-  },
-  unhideTextInstance(textInstance: TextInstance): void {
-    //
-  },
-  clearContainer(container: Container): void {
-    //
-  },
-});
+    if (isRouteElement(child)) {
+      throw new Error("Route cannot be inside a route.");
+    }
+    if (isStaticElement(child)) {
+      throw new Error("Static cannot be inside a route.");
+    }
+  }
+  if (isStaticElement(parentInstance)) {
+    if (isRouterElement(child)) {
+      throw new Error("Router cannot be inside a static.");
+    }
+    if (isRouteElement(child)) {
+      throw new Error("Route cannot be inside a static.");
+    }
+    if (isStaticElement(child)) {
+      throw new Error("Static cannot be inside a static.");
+    }
+  }
+}
+
+function finalizeInitialChildren(
+  instance: Instance,
+  type: Type,
+  props: Props,
+  rootContainer: Container,
+  hostContext: HostContext
+): boolean {
+  return false;
+}
+
+function prepareUpdate(
+  instance: Instance,
+  type: Type,
+  oldProps: Props,
+  newProps: Props,
+  rootContainer: Container,
+  hostContext: HostContext
+): UpdatePayload | null {
+  //
+}
+
+function shouldSetTextContent(type: Type, props: Props): boolean {
+  return false;
+}
+
+function getRootHostContext(rootContainer: Container): HostContext | null {
+  //
+}
+
+function getChildHostContext(parentHostContext: HostContext, type: Type, rootContainer: Container): HostContext {
+  //
+}
+
+function getPublicInstance(instance: Instance | TextInstance): PublishInstance {
+  //
+}
+
+function prepareForCommit(containerInfo: Container): Record<string, any> | null {
+  return null;
+}
+
+function resetAfterCommit(containerInfo: Container): void {
+  //
+}
+
+function preparePortalMount(containerInfo: Container): void {
+  //
+}
+
+function now(): number {
+  return Date.now();
+}
+
+function scheduleTimeout(fn: (...args: unknown[]) => unknown, delay?: number): TimeoutHandle {
+  return window.setTimeout(fn, delay);
+}
+
+function cancelTimeout(id: TimeoutHandle): void {
+  window.clearTimeout(id);
+}
+
+function queueMicrotask(fn: () => void): void {
+  //
+}
+
+function appendChild(parentInstance: Instance, child: Instance | TextInstance): void {
+  //
+}
+
+function appendChildToContainer(container: any, child: Instance | TextInstance) {
+  //
+}
+
+function insertBefore(
+  parentInstance: Instance,
+  child: Instance | TextInstance,
+  beforeChid: Instance | TextInstance | SuspenseInstance
+): void {
+  //
+}
+
+function insertInContainerBefore(
+  container: Container,
+  child: Instance | TextInstance,
+  beforeChild: Instance | TextInstance | SuspenseInstance
+): void {
+  //
+}
+
+function removeChild(parentInstance: Instance, child: Instance | TextInstance | SuspenseInstance): void {
+  //
+}
+
+function removeChildFromContainer(container: Container, child: Instance | TextInstance | SuspenseInstance): void {
+  //
+}
+
+function resetTextContent(instance: Instance): void {
+  //
+}
+
+function commitTextUpdate(textInstance: TextInstance, oldText: string, newText: string): void {
+  //
+}
+
+function commitMount(instance: Instance, type: Type, props: Props, internalInstanceHandle: OpaqueHandle): void {
+  //
+}
+
+function commitUpdate(
+  instance: Instance,
+  updatePayload: UpdatePayload,
+  type: Type,
+  prevProps: Props,
+  nextProps: Props,
+  internalHandle: OpaqueHandle
+): void {
+  //
+}
+
+function hideInstance(instance: Instance): void {
+  //
+}
+
+function hideTextInstance(textInstance: TextInstance): void {
+  //
+}
+
+function unhideInstance(instance: Instance): void {
+  //
+}
+
+function unhideTextInstance(textInstance: TextInstance): void {
+  //
+}
+
+function clearContainer(container: Container): void {
+  //
+}
 
 const isAppElement = (element: any): element is RootElement => element instanceof RootElement;
 const isRouterElement = (element: any): element is RouterElement => element instanceof RouterElement;

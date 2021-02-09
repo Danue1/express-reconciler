@@ -21,25 +21,25 @@ function App({ port }: Props) {
 }
 
 const GraphQLRouter = () => {
-  const graphql = (): ResponseBuilder => {
+  const broadcast = (): ResponseBuilder => {
     return ResponseBuilder.of().body(`Hello, GraphQL Broadcast!`);
   };
 
   return (
     <router path="/graphql">
-      <get path="/broadcast" controller={graphql} />
+      <get path="/broadcast" controller={broadcast} />
     </router>
   );
 };
 
 const VersionRouter = () => {
-  const version = (): ResponseBuilder => {
+  const broadcast = (): ResponseBuilder => {
     return ResponseBuilder.of().body("Hello, Version Broadcast!");
   };
 
   return (
     <router path="/version">
-      <get path="/broadcast" controller={version} />
+      <get path="/broadcast" controller={broadcast} />
     </router>
   );
 };
